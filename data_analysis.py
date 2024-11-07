@@ -39,7 +39,7 @@ else:
     st.subheader("当前使用的示例数据")
 
 # 显示数据
-st.write(data.head())
+# st.write(data.head())
 
 # 确保数据有两列，分别为group_A和group_B
 if data.shape[1] == 2:
