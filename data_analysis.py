@@ -5,18 +5,19 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 # 设置页面标题
-st.title("火山图分析应用")
+st.title("")
+
+# 上传数据文件
+st.sidebar.header("上传数据")
+uploaded_file = st.sidebar.file_uploader("选择一个CSV文件", type=["csv"])
 
 # 侧边栏输入控件
 st.sidebar.header("设置参数")
 fold_change_threshold = st.sidebar.slider("Fold Change (FC) 阈值", min_value=0.0, max_value=5.0, value=1.5, step=0.1)
 pval_threshold = st.sidebar.slider("P 值阈值", min_value=0.0, max_value=0.05, value=0.05, step=0.01)
+st.sidebar.header("绘图参数")
 point_size = st.sidebar.slider("点的大小", min_value=10, max_value=200, value=40, step=10)
 point_alpha = st.sidebar.slider("点的透明度", min_value=0.0, max_value=1.0, value=0.7, step=0.05)
-
-# 上传数据文件
-st.sidebar.header("上传数据")
-uploaded_file = st.sidebar.file_uploader("选择一个CSV文件", type=["csv"])
 
 # 默认数据集
 default_data = pd.DataFrame({
@@ -36,7 +37,6 @@ if uploaded_file is not None:
 else:
     # 使用默认数据
     data = default_data
-    st.subheader("当前使用的示例数据")
 
 # 显示数据
 st.write(data.head())
