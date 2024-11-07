@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.express as px
 from scipy import stats
 
 # 设置页面标题
@@ -26,6 +27,7 @@ default_data = pd.DataFrame({
 if uploaded_file is not None:
     data = pd.read_csv(uploaded_file)
     st.subheader("上传的数据预览")
+    st.write(data.head())
 else:
     data = default_data
     st.sidebar.subheader("默认数据预览")
@@ -62,9 +64,16 @@ if page == "火山图":
         ax.axvline(-fold_change_threshold, color="black", linestyle="--")
         ax.set_xlabel("log2(Fold Change)")
         ax.set_ylabel("-log10(P value)")
-        ax.set_title("Volcano Plot")
+        ax.set_title("火山图 (Volcano Plot)")
         ax.legend()
         st.pyplot(fig)
+
+        # 显示显著性基因数量
+        significant_genes = data[(data["pvalue"] <= pval_threshold) & (abs(data["log2FoldChange"]) >= fold_change_threshold)]
+        st.subheader("显著基因")
+        st.write(f"显著基因数量: {len(significant_genes)}")
+        st.write(significant_genes)
+        
     else:
         st.error("数据必须包含两列，分别表示group_A和group_B。")
 
@@ -72,14 +81,23 @@ elif page == "热图":
     # 设置热图的参数
     st.sidebar.header("设置热图参数")
     cmap = st.sidebar.selectbox("选择颜色映射", ["viridis", "plasma", "inferno", "magma", "cividis"])
-    annot = st.sidebar.checkbox("显示数值", value=True)
 
     # 确保数据至少有两列才能生成热图
     if data.shape[1] >= 2:
-        # 绘制热图
-        fig, ax = plt.subplots(figsize=(8, 6))
-        sns.heatmap(data.corr(), annot=annot, cmap=cmap, ax=ax)
-        ax.set_title("Heatmap")
-        st.pyplot(fig)
+        # 计算相关性矩阵
+        corr_matrix = data.corr()
+
+        # 绘制交互式热图
+        fig = px.imshow(corr_matrix, text_auto=True, color_continuous_scale=cmap, aspect="auto")
+        fig.update_layout(title="交互式热图 (Interactive Heatmap)", width=800, height=600)
+        
+        st.plotly_chart(fig)
+
+        # 提供相关性矩阵的下载
+        st.subheader("相关性矩阵")
+        st.write(corr_matrix)
+        csv = corr_matrix.to_csv(index=False).encode('utf-8')
+        st.download_button("下载相关性矩阵", data=csv, file_name="correlation_matrix.csv", mime="text/csv")
+
     else:
         st.error("数据必须包含至少两列才能绘制热图。")
