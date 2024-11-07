@@ -7,17 +7,23 @@ from scipy import stats
 # 设置页面标题
 st.title("火山图分析应用")
 
-# 上传数据文件
-st.sidebar.header("上传文件")
-uploaded_file = st.sidebar.file_uploader("选择一个CSV文件", type=["csv"])
+# 使用 st.columns 创建三列布局
+col1, col2, col3 = st.columns([1, 3, 1])
 
-# 侧边栏输入控件
-st.sidebar.header("分析参数")
-fold_change_threshold = st.sidebar.slider("Fold Change (FC) 阈值", min_value=0.0, max_value=5.0, value=1.5, step=0.1)
-pval_threshold = st.sidebar.slider("P 值阈值", min_value=0.0, max_value=0.05, value=0.05, step=0.01)
-st.sidebar.header("绘图参数")
-point_size = st.sidebar.slider("点的大小", min_value=10, max_value=200, value=40, step=10)
-point_alpha = st.sidebar.slider("点的透明度", min_value=0.0, max_value=1.0, value=0.7, step=0.05)
+# 上传数据文件
+with col1:
+    st.header("上传文件")
+    uploaded_file = st.file_uploader("选择一个CSV文件", type=["csv"])
+
+# 分析参数和绘图参数
+with col1:
+    st.header("分析参数")
+    fold_change_threshold = st.slider("Fold Change (FC) 阈值", min_value=0.0, max_value=5.0, value=1.5, step=0.1)
+    pval_threshold = st.slider("P 值阈值", min_value=0.0, max_value=0.05, value=0.05, step=0.01)
+    
+    st.header("绘图参数")
+    point_size = st.slider("点的大小", min_value=10, max_value=200, value=40, step=10)
+    point_alpha = st.slider("点的透明度", min_value=0.0, max_value=1.0, value=0.7, step=0.05)
 
 # 默认数据集
 default_data = pd.DataFrame({
@@ -25,9 +31,10 @@ default_data = pd.DataFrame({
     "group_B": [3.5, 2.1, 4.0, 1.2, 5.0, 3.1, 2.0, 3.3, 2.8, 3.7, 2.0, 1.8, 2.3, 1.0, 3.2, 2.5, 1.7, 2.1, 1.9, 2.6]
 })
 
-# 显示默认数据预览在侧边栏
-st.sidebar.subheader("示例数据")
-st.sidebar.write(default_data.head())
+# 在最右侧显示示例数据预览
+with col3:
+    st.subheader("示例数据")
+    st.write(default_data.head())
 
 # 使用默认数据或上传的数据
 if uploaded_file is not None:
@@ -38,29 +45,22 @@ else:
     # 使用默认数据
     data = default_data
 
-# 显示数据
-# st.write(data.head())
-
 # 确保数据有两列，分别为group_A和group_B
 if data.shape[1] == 2:
     # 计算Fold Change和P-value
     data.columns = ['group_A', 'group_B']
-
-    # 计算Fold Change (log2 scale)
     data['log2FoldChange'] = np.log2(data['group_B'] / data['group_A'])
-
-    # 计算p-value
     _, pval = stats.ttest_ind(data['group_A'], data['group_B'])
     data['pvalue'] = pval
 
-    # 根据FC和P值计算点的颜色
+    # 设置点的颜色，显著性高的为红色，显著性中等为橙色，其余为蓝色
     data["color"] = np.where(
-        (data["log2FoldChange"] >= fold_change_threshold) & (data["pvalue"] <= pval_threshold), "red", "blue"
+        (data["log2FoldChange"] >= fold_change_threshold) & (data["pvalue"] <= pval_threshold), "red",
+        np.where((data["log2FoldChange"] < fold_change_threshold) & (data["pvalue"] <= pval_threshold), "orange", "blue")
     )
 
     # 绘制火山图
     fig, ax = plt.subplots(figsize=(8, 6))
-
     ax.scatter(data["log2FoldChange"], -np.log10(data["pvalue"]), 
                c=data["color"], s=point_size, alpha=point_alpha, edgecolor="k")
 
@@ -77,7 +77,10 @@ if data.shape[1] == 2:
     # 显示图例
     ax.legend()
 
-    # 显示图形
-    st.pyplot(fig)
+    # 在中间列显示火山图
+    with col2:
+        st.pyplot(fig)
 else:
-    st.error("数据必须包含两列，分别表示group_A和group_B。")
+    with col2:
+        st.error("数据必须包含两列，分别表示group_A和group_B。")
+
