@@ -7,8 +7,8 @@ from scipy import stats
 # 设置页面标题
 st.title("火山图分析应用")
 
-# 使用 st.columns 创建三列布局
-col1, col2, col3 = st.columns([1, 3, 1])
+# 使用 st.columns 创建三个宽度比例不同的列布局
+col1, col2, col3 = st.columns([1, 5, 2])  # 中间列更宽，左右列更窄
 
 # 上传数据文件
 with col1:
@@ -31,7 +31,7 @@ default_data = pd.DataFrame({
     "group_B": [3.5, 2.1, 4.0, 1.2, 5.0, 3.1, 2.0, 3.3, 2.8, 3.7, 2.0, 1.8, 2.3, 1.0, 3.2, 2.5, 1.7, 2.1, 1.9, 2.6]
 })
 
-# 在最右侧显示示例数据预览
+# 在右侧显示示例数据预览
 with col3:
     st.subheader("示例数据")
     st.write(default_data.head())
