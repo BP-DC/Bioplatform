@@ -1,39 +1,67 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
 
-# 创建页面布局：一列用于输入控件，另一列用于图形
-col1, col2 = st.columns([1, 2])  # 设置列的比例，col1 比较小，col2 比较大
+# 设置页面标题
+st.title("火山图分析应用")
 
-# 在第一个列 (col1) 中添加输入控件
-with col1:
-    st.header("设置参数")
-    fold_change_threshold = st.slider("Fold Change 阈值", min_value=0.0, max_value=3.0, value=1.5, step=0.1)
-    pval_threshold = st.slider("P 值阈值", min_value=0.0, max_value=0.05, value=0.05, step=0.01)
+# 侧边栏输入控件
+st.sidebar.header("设置参数")
+fold_change_threshold = st.sidebar.slider("Fold Change (FC) 阈值", min_value=0.0, max_value=5.0, value=1.5, step=0.1)
+pval_threshold = st.sidebar.slider("P 值阈值", min_value=0.0, max_value=0.05, value=0.05, step=0.01)
+point_size = st.sidebar.slider("点的大小", min_value=10, max_value=200, value=40, step=10)
+point_alpha = st.sidebar.slider("点的透明度", min_value=0.0, max_value=1.0, value=0.7, step=0.05)
 
-# 创建数据
-data = pd.DataFrame({
-    "gene": ["GeneA", "GeneB", "GeneC", "GeneD", "GeneE"],
-    "log2FoldChange": [1.5, -2.0, 0.5, 3.0, -1.2],
-    "pvalue": [0.001, 0.05, 0.02, 0.001, 0.03]
+# 上传数据文件
+st.sidebar.header("上传数据")
+uploaded_file = st.sidebar.file_uploader("选择一个CSV文件", type=["csv"])
+
+# 默认数据集
+default_data = pd.DataFrame({
+    "A": [2.0, 1.8, 2.3, 1.0, 3.2],
+    "B": [3.5, 2.1, 4.0, 1.2, 5.0]
 })
 
-# 在第二个列 (col2) 中绘制火山图
-with col2:
-    st.header("火山图")
-    fig, ax = plt.subplots(figsize=(8, 6))
+# 使用默认数据或上传的数据
+if uploaded_file is not None:
+    # 读取上传的CSV文件
+    data = pd.read_csv(uploaded_file)
+    st.subheader("上传的数据预览")
+else:
+    # 使用默认数据
+    data = default_data
+    st.subheader("默认数据预览")
 
-    # 根据阈值决定颜色
+# 显示数据
+st.write(data.head())
+
+# 确保数据有两列，分别为A和B
+if data.shape[1] == 2:
+    # 计算Fold Change和P-value
+    data.columns = ['A', 'B']
+
+    # 计算Fold Change (log2 scale)
+    data['log2FoldChange'] = np.log2(data['B'] / data['A'])
+
+    # 计算p-value
+    _, pval = stats.ttest_ind(data['A'], data['B'])
+    data['pvalue'] = pval
+
+    # 根据FC和P值计算点的颜色
     data["color"] = np.where(
         (data["log2FoldChange"] >= fold_change_threshold) & (data["pvalue"] <= pval_threshold), "red", "blue"
     )
 
     # 绘制火山图
-    ax.scatter(data["log2FoldChange"], -np.log10(data["pvalue"]), c=data["color"], s=100, edgecolor="k")
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    ax.scatter(data["log2FoldChange"], -np.log10(data["pvalue"]), 
+               c=data["color"], s=point_size, alpha=point_alpha, edgecolor="k")
 
     # 添加阈值线
-    ax.axhline(-np.log10(pval_threshold), color="black", linestyle="--", label="P value threshold")
+    ax.axhline(-np.log10(pval_threshold), color="black", linestyle="--", label="P-value threshold")
     ax.axvline(fold_change_threshold, color="black", linestyle="--", label="Fold Change threshold")
     ax.axvline(-fold_change_threshold, color="black", linestyle="--")
 
@@ -47,3 +75,5 @@ with col2:
 
     # 显示图形
     st.pyplot(fig)
+else:
+    st.error("数据必须包含两列，分别表示A和B。")
