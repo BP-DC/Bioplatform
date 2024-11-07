@@ -38,9 +38,6 @@ else:
     # 使用默认数据
     data = default_data
 
-# 显示数据
-st.write(data.head())
-
 # 确保数据有两列，分别为group_A和group_B
 if data.shape[1] == 2:
     # 计算Fold Change和P-value
