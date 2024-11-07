@@ -36,7 +36,6 @@ if uploaded_file is not None:
 else:
     # 使用默认数据
     data = default_data
-    st.subheader("当前使用的示例数据")
 
 # 显示数据
 # st.write(data.head())
