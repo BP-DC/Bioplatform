@@ -20,9 +20,13 @@ uploaded_file = st.sidebar.file_uploader("选择一个CSV文件", type=["csv"])
 
 # 默认数据集
 default_data = pd.DataFrame({
-    "A": [2.0, 1.8, 2.3, 1.0, 3.2],
-    "B": [3.5, 2.1, 4.0, 1.2, 5.0]
+    "group_A": [2.0, 1.8, 2.3, 1.0, 3.2, 2.5, 1.7, 2.1, 1.9, 2.6],
+    "group_B": [3.5, 2.1, 4.0, 1.2, 5.0, 3.1, 2.0, 3.3, 2.8, 3.7]
 })
+
+# 显示默认数据预览在侧边栏
+st.sidebar.subheader("默认数据预览")
+st.sidebar.write(default_data.head())
 
 # 使用默认数据或上传的数据
 if uploaded_file is not None:
@@ -32,21 +36,21 @@ if uploaded_file is not None:
 else:
     # 使用默认数据
     data = default_data
-    st.subheader("默认数据预览")
+    st.subheader("当前使用的示例数据")
 
 # 显示数据
 st.write(data.head())
 
-# 确保数据有两列，分别为A和B
+# 确保数据有两列，分别为group_A和group_B
 if data.shape[1] == 2:
     # 计算Fold Change和P-value
-    data.columns = ['A', 'B']
+    data.columns = ['group_A', 'group_B']
 
     # 计算Fold Change (log2 scale)
-    data['log2FoldChange'] = np.log2(data['B'] / data['A'])
+    data['log2FoldChange'] = np.log2(data['group_B'] / data['group_A'])
 
     # 计算p-value
-    _, pval = stats.ttest_ind(data['A'], data['B'])
+    _, pval = stats.ttest_ind(data['group_A'], data['group_B'])
     data['pvalue'] = pval
 
     # 根据FC和P值计算点的颜色
@@ -76,4 +80,4 @@ if data.shape[1] == 2:
     # 显示图形
     st.pyplot(fig)
 else:
-    st.error("数据必须包含两列，分别表示A和B。")
+    st.error("数据必须包含两列，分别表示group_A和group_B。")
